@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Venus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Great+Vibes&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --gold: #d4af37;
+            --gold-dim: #aa8c2c;
+            --bg-dark: #0a0a0a;
+            --text-light: #f0f0f0;
+            --glass: rgba(255, 255, 255, 0.05);
+            --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden; /* Prevent scrolling */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* --- CANVAS BACKGROUND --- */
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* --- LAYOUT CONTAINERS --- */
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+
+        /* --- SCREEN: ENTER (PRELOADER) --- */
+        #enter-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.5s ease;
+            cursor: pointer;
+        }
+        .enter-text {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 4px;
+            font-size: 0.9rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- SCREEN: MAIN --- */
+        #main-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 2s ease, transform 2s var(--ease-out);
+            display: none; /* Hidden initially */
+        }
+
+        /* Photo Frame */
+        .photo-wrapper {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            margin-bottom: 30px;
+            position: relative;
+            opacity: 0; /* JS reveals this */
+            transform: scale(0.9);
+            transition: all 1.5s var(--ease-out);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.1);
+        }
+        
+        .photo-wrapper::after {
+            content: '';
+            position: absolute;
+            top: -5px; left: -5px; right: -5px; bottom: -5px;
+            border-radius: 50%;
+            border: 1px solid var(--gold);
+            opacity: 0.3;
+            animation: spin 20s linear infinite;
+        }
+
+        .photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        /* Typography */
+        h1.name-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3.5rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            opacity: 0; /* JS reveals this */
+        }
+
+        .message-box {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            min-height: 60px; /* Reserve space */
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Button */
+        .btn-premium {
+            background: transparent;
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            padding: 15px 40px;
+            border: 1px solid var(--gold);
+            cursor: pointer;
+            transition: all 0.5s ease;
+            text-transform: uppercase;
+            opacity: 0; /* Hidden until typed */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-premium:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        /* --- SCREEN: FINAL --- */
+        #final-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            background: rgba(10, 10, 10, 0.9); /* Slight transparency for fireworks */
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+
+        .final-text {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+        }
+
+        .final-sub {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2rem;
+            color: #fff;
+            opacity: 0.8;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Utility */
+        .hidden { display: none; }
+        .fade-in { opacity: 1 !important; transform: translateY(0) scale(1) !important; }
+
+        /* Mobile Optimization */
+        @media (max-width: 480px) {
+            h1.name-title { font-size: 2.8rem; }
+            .photo-wrapper { width: 180px; height: 180px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_249419143a.mp3?filename=romantic-piano-125028.mp3" type="audio/mpeg">
+    </audio>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="enter-screen">
+        <div class="enter-text">Tap to Enter</div>
+    </div>
+
+    <div class="container" id="main-content">
+        <div class="photo-wrapper" id="photo-el">
+            <img src="herphoto.jpg" alt="Venus" class="photo-img">
+        </div>
+        
+        <h1 class="name-title" id="name-el">Dearest Venus</h1>
+        
+        <div class="message-box" id="typewriter"></div>
+
+        <button class="btn-premium" id="yes-btn">Yes, I will 💕</button>
+    </div>
+
+    <div id="final-screen">
+        <div class="final-text">Forever Yours</div>
+        <div class="final-sub">Always.</div>
+    </div>
+
+    <script>
+        /* --- CONFIGURATION --- */
+        const CONFIG = {
+            redirectPhone: "919389143611",
+            redirectMessage: "Yes I will be your Valentine ❤️",
+            typewriterText: "In a world of noise, you are my quiet melody. Will you make this moment eternal?",
+            redirectDelay: 5000 // 5 seconds to watch fireworks
+        };
+
+        /* --- DOM ELEMENTS --- */
+        const enterScreen = document.getElementById('enter-screen');
+        const mainContent = document.getElementById('main-content');
+        const bgMusic = document.getElementById('bg-music');
+        const photoEl = document.getElementById('photo-el');
+        const nameEl = document.getElementById('name-el');
+        const typewriterEl = document.getElementById('typewriter');
+        const yesBtn = document.getElementById('yes-btn');
+        const finalScreen = document.getElementById('final-screen');
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+
+        /* --- STATE --- */
+        let particles = [];
+        let fireworks = [];
+        let canvasWidth, canvasHeight;
+
+        /* --- INITIALIZATION --- */
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        initParticles();
+        animateBackground();
+
+        /* --- USER INTERACTION FLOW --- */
+        
+        // 1. Enter Screen Click
+        enterScreen.addEventListener('click', () => {
+            // Start Music
+            bgMusic.volume = 0.5;
+            bgMusic.play().catch(e => console.log("Audio play failed", e));
+            
+            // Fade out enter screen
+            enterScreen.style.opacity = '0';
+            setTimeout(() => {
+                enterScreen.style.display = 'none';
+                showMainContent();
+            }, 1500);
+        });
+
+        // 2. Show Main Content Sequence
+        function showMainContent() {
+            mainContent.style.display = 'flex';
+            // Trigger CSS Reflow
+            void mainContent.offsetWidth; 
+            mainContent.classList.add('fade-in');
+
+            // Sequence: Photo -> Name -> Typewriter -> Button
+            setTimeout(() => {
+                photoEl.classList.add('fade-in');
+            }, 500);
+
+            setTimeout(() => {
+                nameEl.classList.add('fade-in');
+            }, 1200);
+
+            setTimeout(() => {
+                startTypewriter();
+            }, 2000);
+        }
+
+        // 3. Typewriter Effect
+        function startTypewriter() {
+            const text = CONFIG.typewriterText;
+            let i = 0;
+            const speed = 50; // ms per char
+
+            function type() {
+                if (i < text.length) {
+                    typewriterEl.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    // Show button after typing done
+                    setTimeout(() => {
+                        yesBtn.classList.add('fade-in');
+                    }, 500);
+                }
+            }
+            type();
+        }
+
+        // 4. Yes Button Click
+        yesBtn.addEventListener('click', () => {
+            // Launch Fireworks loop
+            launchFireworks();
+            
+            // Fade out main content
+            mainContent.style.opacity = '0';
+            mainContent.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                mainContent.style.display = 'none';
+                showFinalScreen();
+            }, 1500);
+        });
+
+        // 5. Final Screen & Redirect
+        function showFinalScreen() {
+            finalScreen.style.display = 'flex';
+            void finalScreen.offsetWidth;
+            finalScreen.style.opacity = '1';
+
+            // WhatsApp Redirect
+            setTimeout(() => {
+                const text = encodeURIComponent(CONFIG.redirectMessage);
+                window.location.href = `https://wa.me/${CONFIG.redirectPhone}?text=${text}`;
+            }, CONFIG.redirectDelay);
+        }
+
+        /* --- GRAPHICS ENGINE (CANVAS) --- */
+
+        function resizeCanvas() {
+            canvasWidth = window.innerWidth;
+            canvasHeight = window.innerHeight;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+        }
+
+        // Ambient Particles (Gold Dust)
+        function initParticles() {
+            for(let i=0; i < 60; i++) {
+                particles.push({
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
+                    size: Math.random() * 2,
+                    speedY: Math.random() * 0.5 - 0.25,
+                    speedX: Math.random() * 0.5 - 0.25,
+                    opacity: Math.random()
+                });
+            }
+        }
+
+        // Simple Firework Class
+        class Firework {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.particles = [];
+                const colors = ['#d4af37', '#ffffff', '#ffeb3b', '#e6c200'];
+                
+                for(let i=0; i<30; i++) {
+                    const angle = (Math.PI * 2 * i) / 30;
+                    const speed = Math.random() * 3 + 2;
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        alpha: 1,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        decay: Math.random() * 0.02 + 0.01
+                    });
+                }
+            }
+
+            update() {
+                this.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.05; // gravity
+                    p.alpha -= p.decay;
+                });
+                this.particles = this.particles.filter(p => p.alpha > 0);
+            }
+
+            draw(ctx) {
+                this.particles.forEach(p => {
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function launchFireworks() {
+            // Create random fireworks
+            setInterval(() => {
+                const x = Math.random() * canvasWidth;
+                const y = Math.random() * (canvasHeight / 2); // Top half
+                fireworks.push(new Firework(x, y));
+            }, 800);
+        }
+
+        function animateBackground() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Draw Particles (Ambient)
+            ctx.fillStyle = '#d4af37';
+            particles.forEach(p => {
+                p.x += p.speedX;
+                p.y += p.speedY;
+                if(p.x > canvasWidth) p.x = 0;
+                if(p.x < 0) p.x = canvasWidth;
+                if(p.y > canvasHeight) p.y = 0;
+                if(p.y < 0) p.y = canvasHeight;
+
+                ctx.globalAlpha = p.opacity;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw Fireworks (if any)
+            fireworks.forEach((fw, index) => {
+                fw.update();
+                fw.draw(ctx);
+                if(fw.particles.length === 0) {
+                    fireworks.splice(index, 1);
+                }
+            });
+
+            requestAnimationFrame(animateBackground);
+        }
+    </script>
+</body>
+</html>
